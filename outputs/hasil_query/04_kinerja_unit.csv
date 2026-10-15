@@ -1,0 +1,7 @@
+peringkat_terendah,unit_layanan,total_tiket,persen_tepat_waktu,selisih_dari_target_90,rata_durasi_jam,rata_kepuasan
+1,Unit Timur,3668,73.8,-16.2,30.8,3.75
+2,Unit Pesisir,3483,77.9,-12.1,28.4,3.81
+3,Unit Utara,4327,86.9,-3.1,19.3,3.95
+4,Unit Selatan,4130,87.6,-2.4,19.4,3.98
+5,Unit Barat,4001,89.1,-0.9,18.6,4.01
+6,Unit Pusat,5615,89.2,-0.8,16.9,4.02

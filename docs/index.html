@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Pengaduan Listrik Prabayar</title>
+<meta name="description" content="Dashboard portofolio: kinerja layanan pengaduan pelanggan listrik prabayar, data simulasi 2024-2025.">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10); --band: #f0efec;
+    --s1: #2a78d6; --dim: #d3d2cb; --ref: #52514e; --focus: #2a78d6;
+    --heat: #cde2fb,#9ec5f4,#6da7ec,#3987e5,#256abf,#184f95,#0d366b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10); --band: #232322;
+      --s1: #3987e5; --dim: #45453f; --ref: #c3c2b7; --focus: #6da7ec;
+      --heat: #0d366b,#104281,#184f95,#1c5cab,#2a78d6,#5598e7,#9ec5f4;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10); --band: #232322;
+    --s1: #3987e5; --dim: #45453f; --ref: #c3c2b7; --focus: #6da7ec;
+    --heat: #0d366b,#104281,#184f95,#1c5cab,#2a78d6,#5598e7,#9ec5f4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 16px 56px; }
+  header h1 { font-size: 22px; line-height: 1.25; margin: 0 0 6px; }
+  .lede { margin: 0; color: var(--ink-2); max-width: 760px; }
+  .sim { display: inline-block; font-size: 11.5px; font-weight: 600; letter-spacing: .04em;
+         border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; margin-bottom: 10px;
+         color: var(--ink-2); background: var(--surface); }
+  .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 20px 0 16px; }
+  .filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-2); }
+  select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--axis);
+           border-radius: 8px; padding: 7px 10px; min-width: 170px; }
+  select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .headline { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+              padding: 14px 16px; margin-bottom: 12px; font-size: 15px; }
+  .kpis { display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); } .kpis .hero { grid-column: 1 / -1; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
+  .tile .label { font-size: 12.5px; color: var(--ink-2); }
+  .tile .value { font-size: 28px; font-weight: 600; line-height: 1.2; margin-top: 4px; }
+  .tile.hero .value { font-size: 48px; }
+  .tile .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  .stack { display: grid; gap: 12px; margin-bottom: 12px; }
+  h2 { font-size: 15px; margin: 0 0 2px; }
+  .desc { font-size: 12.5px; color: var(--ink-2); margin: 0 0 10px; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart svg text { font-family: inherit; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); }
+  .tbl-wrap { overflow-x: auto; margin-top: 8px; }
+  table.data { border-collapse: collapse; font-size: 12.5px; width: 100%; font-variant-numeric: tabular-nums; }
+  table.data th, table.data td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  table.data th:first-child, table.data td:first-child { text-align: left; }
+  table.data th { color: var(--ink-2); font-weight: 600; }
+  .tooltip { position: fixed; z-index: 10; pointer-events: none; background: var(--surface); color: var(--ink);
+             border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px;
+             box-shadow: 0 4px 16px rgba(0,0,0,.12); opacity: 0; transition: opacity .08s; max-width: 260px; }
+  .tooltip .tv { font-weight: 600; font-size: 14px; }
+  .tooltip .tl { color: var(--ink-2); }
+  .notes ul { margin: 6px 0 0; padding-left: 18px; }
+  .notes li { margin-bottom: 6px; }
+  footer { margin-top: 20px; font-size: 12.5px; color: var(--ink-2); }
+  footer a, .notes a { color: var(--s1); }
+  .hit { fill: transparent; cursor: default; }
+  .hit:focus { outline: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="sim">DATA SIMULASI · PROYEK PORTOFOLIO</span>
+    <h1>Kinerja Layanan Pengaduan Pelanggan Listrik Prabayar</h1>
+    <p class="lede">Seberapa cepat pengaduan diselesaikan, di mana keterlambatan menumpuk, dan apa dampaknya bagi pelanggan.
+      Data dibuat dengan simulasi (2024–2025) dan tidak berasal dari perusahaan mana pun.</p>
+  </header>
+
+  <div class="filters" role="group" aria-label="Filter dashboard">
+    <label>Periode
+      <select id="f-periode">
+        <option value="semua">Semua (2024–2025)</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+      </select>
+    </label>
+    <label>Unit layanan <select id="f-unit"></select></label>
+    <label>Kategori pengaduan <select id="f-kategori"></select></label>
+  </div>
+
+  <div class="headline" id="headline" aria-live="polite"></div>
+
+  <section class="kpis" id="kpis" aria-label="Indikator utama"></section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Jumlah pengaduan per bulan</h2>
+      <p class="desc">Area abu-abu menandai musim hujan (November–Maret).</p>
+      <div class="chart" id="c-bulan"></div>
+      <details><summary>Lihat data dalam tabel</summary><div class="tbl-wrap" id="t-bulan"></div></details>
+    </div>
+    <div class="card">
+      <h2>Persentase pengaduan selesai tepat waktu per bulan</h2>
+      <p class="desc">Tepat waktu = selesai dalam target SLA kategorinya. Garis mendatar menunjukkan target 90%.</p>
+      <div class="chart" id="c-tepat"></div>
+      <details><summary>Lihat data dalam tabel</summary><div class="tbl-wrap" id="t-tepat"></div></details>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Ketepatan waktu per unit layanan</h2>
+      <p class="desc">Diurutkan dari yang terendah. Unit yang dipilih di filter disorot.</p>
+      <div class="chart" id="c-unit"></div>
+      <details><summary>Lihat data dalam tabel</summary><div class="tbl-wrap" id="t-unit"></div></details>
+    </div>
+    <div class="card">
+      <h2>Dampak keterlambatan</h2>
+      <p class="desc" id="d-dampak"></p>
+      <div class="chart" id="c-dampak"></div>
+      <details><summary>Lihat data dalam tabel</summary><div class="tbl-wrap" id="t-dampak"></div></details>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Volume dan ketepatan waktu per kategori</h2>
+      <p class="desc">Diurutkan dari volume terbesar. Kategori yang dipilih di filter disorot.</p>
+      <div class="chart" id="c-kategori"></div>
+      <details><summary>Lihat data dalam tabel</summary><div class="tbl-wrap" id="t-kategori"></div></details>
+    </div>
+    <div class="card">
+      <h2>Kapan pengaduan masuk</h2>
+      <p class="desc">Jumlah tiket menurut hari dan jam pelaporan. Makin gelap, makin banyak.</p>
+      <div class="chart" id="c-jam"></div>
+      <details><summary>Lihat data dalam tabel</summary><div class="tbl-wrap" id="t-jam"></div></details>
+    </div>
+  </section>
+
+  <section class="card notes">
+    <h2>Rekomendasi (berdasarkan seluruh data simulasi)</h2>
+    <ul>
+      <li><strong>Unit Timur dan Unit Pesisir:</strong> tinjau jumlah petugas lapangan dan pantau ketepatan waktu tiap minggu. Kedua unit melayani 28% tiket tetapi menyumbang 45% keterlambatan.</li>
+      <li><strong>Musim hujan:</strong> siapkan regu gangguan tambahan sebelum November. Tiket listrik padam naik sekitar 52% per bulan dan ketepatan waktunya turun dari 84,8% ke 74,3%.</li>
+      <li><strong>Cegah pengaduan ulang:</strong> hubungi kembali pelanggan yang tiketnya melewati SLA dalam 7 hari, dan periksa meter sebelum menutup tiket <em>Meter Error</em> dan <em>kWh Cepat Habis</em>.</li>
+      <li><strong>Jam sibuk token:</strong> tambah petugas call center dan WhatsApp pukul 18.00–23.00, serta dorong panduan mandiri di aplikasi menjelang Lebaran.</li>
+    </ul>
+  </section>
+
+  <footer>
+    Dibuat oleh Ratu Adisya Famela sebagai proyek portofolio analisis data. Seluruh angka berasal dari data simulasi.
+    Kode, query SQL, dan metodologi: <a href="https://github.com/ratuadisyaa/analisis-pengaduan-listrik-prabayar">repositori GitHub</a>.
+  </footer>
+</div>
+<div class="tooltip" id="tooltip" role="status"><div class="tv"></div><div class="tl"></div></div>
+
+<script src="data.js"></script>
+<script>
+(() => {
+  "use strict";
+  const D = window.DATA_DASHBOARD;
+  const IX = Object.fromEntries(D.ukuran.map((k, i) => [k, i + 3]));
+  const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const BULAN_PANJANG = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus",
+                         "September", "Oktober", "November", "Desember"];
+  const HUJAN = new Set([11, 12, 1, 2, 3]);
+  const nf0 = new Intl.NumberFormat("id-ID");
+  const nf1 = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const nf2 = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const persen = v => (v == null || !isFinite(v)) ? "–" : nf1.format(v) + "%";
+  const angka1 = v => (v == null || !isFinite(v)) ? "–" : nf1.format(v);
+  const angka2 = v => (v == null || !isFinite(v)) ? "–" : nf2.format(v);
+  const bagi = (a, b) => b > 0 ? a / b : NaN;
+  const namaBulan = i => { const [y, m] = D.bulan[i].split("-"); return `${BULAN_PANJANG[+m - 1]} ${y}`; };
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  const state = { periode: "semua", unit: -1, kategori: -1 };
+
+  // ------------------------------------------------------------- data --
+  const bulanAktif = i => state.periode === "semua" || D.bulan[i].startsWith(state.periode);
+  function saring(opsi = {}) {
+    return D.kubus.filter(r => bulanAktif(r[0])
+      && (opsi.semuaUnit || state.unit < 0 || r[1] === state.unit)
+      && (opsi.semuaKategori || state.kategori < 0 || r[2] === state.kategori));
+  }
+  function jumlah(rows) {
+    const s = Object.fromEntries(D.ukuran.map(k => [k, 0]));
+    for (const r of rows) for (const k of D.ukuran) s[k] += r[IX[k]];
+    s.tepat = 100 * bagi(s.n_tepat, s.n_dinilai);
+    s.durasi = bagi(s.total_durasi, s.n_durasi);
+    s.kepuasan = bagi(s.total_rating, s.n_rating);
+    s.ulang = 100 * bagi(s.n_ulang, s.n);
+    s.n_telat = s.n_dinilai - s.n_tepat;
+    s.diikutiTepat = 100 * bagi(s.n_tepat_diikuti, s.n_tepat);
+    s.diikutiTelat = 100 * bagi(s.n_telat_diikuti, s.n_telat);
+    s.puasTepat = bagi(s.total_rating_tepat, s.n_rating_tepat);
+    s.puasTelat = bagi(s.total_rating_telat, s.n_rating_telat);
+    return s;
+  }
+  function kelompok(rows, idx) {
+    const m = new Map();
+    for (const r of rows) { if (!m.has(r[idx])) m.set(r[idx], []); m.get(r[idx]).push(r); }
+    return new Map([...m].map(([k, v]) => [k, jumlah(v)]));
+  }
+
+  // ------------------------------------------------------------ helpers --
+  const NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function teks(parent, x, y, s, attrs = {}) {
+    const t = el("text", { x, y, "font-size": 11, fill: "var(--muted)", ...attrs }, parent);
+    t.textContent = s;
+    return t;
+  }
+  function svgBaru(host, w, h, label) {
+    host.replaceChildren();
+    return el("svg", { viewBox: `0 0 ${w} ${h}`, width: w, height: h, role: "img", "aria-label": label }, host);
+  }
+  function langkahRapi(maks, jumlahTick = 4) {
+    const kasar = maks / jumlahTick, p = Math.pow(10, Math.floor(Math.log10(kasar))), m = kasar / p;
+    const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+    return { step, maks: Math.ceil(maks / step) * step };
+  }
+  // Kolom tegak dengan ujung data membulat 4px, rata di garis dasar
+  function kolom(x, yAtas, w, yDasar) {
+    const r = Math.min(4, w / 2, Math.max(0, yDasar - yAtas));
+    return `M${x},${yDasar}V${yAtas + r}A${r},${r} 0 0 1 ${x + r},${yAtas}H${x + w - r}A${r},${r} 0 0 1 ${x + w},${yAtas + r}V${yDasar}Z`;
+  }
+  // Batang mendatar dengan ujung data membulat 4px
+  function batang(x0, x1, y, h) {
+    const r = Math.min(4, h / 2, Math.max(0, x1 - x0));
+    return `M${x0},${y}H${x1 - r}A${r},${r} 0 0 1 ${x1},${y + r}V${y + h - r}A${r},${r} 0 0 1 ${x1 - r},${y + h}H${x0}Z`;
+  }
+  const HALO = { stroke: "var(--surface)", "stroke-width": 3, "paint-order": "stroke", "stroke-linejoin": "round" };
+  const tip = document.getElementById("tooltip");
+  function tampilTip(ev, nilai, label) {
+    tip.querySelector(".tv").textContent = nilai;
+    tip.querySelector(".tl").textContent = label;
+    tip.style.opacity = 1;
+    let x, y;
+    if (ev.clientX != null && ev.type !== "focus") { x = ev.clientX; y = ev.clientY; }
+    else { const b = ev.target.getBoundingClientRect(); x = b.left + b.width / 2; y = b.top; }
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    tip.style.left = Math.min(window.innerWidth - tw - 8, Math.max(8, x + 12)) + "px";
+    tip.style.top = Math.max(8, y - th - 12) + "px";
+  }
+  const sembunyiTip = () => { tip.style.opacity = 0; };
+  function pasangHover(node, isi, onMasuk, onKeluar) {
+    node.setAttribute("tabindex", "0");
+    const masuk = ev => { const [v, l] = isi(); tampilTip(ev, v, l); onMasuk && onMasuk(); };
+    const keluar = () => { sembunyiTip(); onKeluar && onKeluar(); };
+    node.addEventListener("pointermove", masuk);
+    node.addEventListener("focus", masuk);
+    node.addEventListener("pointerleave", keluar);
+    node.addEventListener("blur", keluar);
+  }
+  function tabel(hostId, kepala, baris) {
+    const host = document.getElementById(hostId);
+    const t = document.createElement("table"); t.className = "data";
+    const tr = t.createTHead().insertRow();
+    kepala.forEach(h => { const th = document.createElement("th"); th.textContent = h; tr.appendChild(th); });
+    const tb = t.createTBody();
+    baris.forEach(b => { const r = tb.insertRow(); b.forEach(c => { r.insertCell().textContent = c; }); });
+    host.replaceChildren(t);
+  }
+  const lebar = id => Math.max(300, document.getElementById(id).clientWidth);
+
+  // --------------------------------------------- bagian: sumbu bulanan --
+  function kerangkaBulan(svg, W, H, m, bulan, plot) {
+    const band = (W - m.l - m.r) / bulan.length;
+    const xs = i => m.l + band * i + band / 2;
+    // pita musim hujan
+    let mulai = null;
+    bulan.forEach((b, i) => {
+      const hujan = HUJAN.has(+D.bulan[b].slice(5));
+      if (hujan && mulai === null) mulai = i;
+      if ((!hujan || i === bulan.length - 1) && mulai !== null) {
+        const akhir = hujan ? i : i - 1;
+        const x0 = m.l + band * mulai, w = band * (akhir - mulai + 1);
+        el("rect", { x: x0, y: m.t - 14, width: w, height: H - m.b - m.t + 14, fill: "var(--band)" }, svg);
+        if (w > 74) teks(svg, x0 + 6, m.t - 3, "Musim hujan", { "font-size": 10.5 });
+        mulai = null;
+      }
+    });
+    // label sumbu x
+    const jarang = band < 30;
+    bulan.forEach((b, i) => {
+      const [y, mm] = D.bulan[b].split("-");
+      if (jarang && (+mm % 2 === 0) && i !== 0) return;
+      teks(svg, xs(i), H - m.b + 16, BULAN_PENDEK[+mm - 1], { "text-anchor": "middle" });
+      if (+mm === 1 || i === 0) teks(svg, xs(i), H - m.b + 29, y, { "text-anchor": "middle", fill: "var(--ink-2)" });
+    });
+    return { band, xs };
+  }
+
+  // ------------------------------------------ grafik 1: jumlah per bulan --
+  function grafikBulan(rows) {
+    const W = lebar("c-bulan"), H = 230, m = { l: 44, r: 12, t: 26, b: 36 };
+    const bulan = D.bulan.map((_, i) => i).filter(bulanAktif);
+    const per = kelompok(rows, 0);
+    const nilai = bulan.map(b => (per.get(b) || { n: 0 }).n);
+    const { step, maks } = langkahRapi(Math.max(1, ...nilai));
+    const svg = svgBaru(document.getElementById("c-bulan"), W, H, "Grafik kolom jumlah pengaduan per bulan");
+    const y = v => H - m.b - (v / maks) * (H - m.b - m.t);
+    const { band, xs } = kerangkaBulan(svg, W, H, m, bulan);
+    for (let v = 0; v <= maks + 1e-9; v += step) {
+      el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
+      teks(svg, m.l - 8, y(v) + 4, nf0.format(v), { "text-anchor": "end", style: "font-variant-numeric:tabular-nums" });
+    }
+    const w = Math.min(24, band * 0.62);
+    const iMaks = nilai.indexOf(Math.max(...nilai));
+    bulan.forEach((b, i) => {
+      if (nilai[i] > 0) el("path", { d: kolom(xs(i) - w / 2, y(nilai[i]), w, y(0)), fill: "var(--s1)" }, svg);
+      if (i === iMaks) teks(svg, xs(i), y(nilai[i]) - 6, nf0.format(nilai[i]), { "text-anchor": "middle", fill: "var(--ink)", "font-weight": 600 });
+      const hit = el("rect", { x: m.l + band * i, y: m.t - 14, width: band, height: H - m.b - m.t + 14, class: "hit",
+                               "aria-label": `${namaBulan(b)}: ${nf0.format(nilai[i])} tiket` }, svg);
+      pasangHover(hit, () => [`${nf0.format(nilai[i])} tiket`, `${namaBulan(b)}${HUJAN.has(+D.bulan[b].slice(5)) ? " · musim hujan" : ""}`]);
+    });
+    tabel("t-bulan", ["Bulan", "Jumlah tiket"], bulan.map((b, i) => [namaBulan(b), nf0.format(nilai[i])]));
+  }
+
+  // ------------------------------------- grafik 2: % tepat waktu per bulan --
+  function grafikTepat(rows) {
+    const W = lebar("c-tepat"), H = 220, m = { l: 44, r: 12, t: 26, b: 36 };
+    const bulan = D.bulan.map((_, i) => i).filter(bulanAktif);
+    const per = kelompok(rows, 0);
+    const nilai = bulan.map(b => per.has(b) ? per.get(b).tepat : NaN);
+    const ada = nilai.filter(isFinite);
+    const bawah = Math.min(80, Math.floor((Math.min(...ada) - 3) / 5) * 5);
+    const y = v => H - m.b - ((v - bawah) / (100 - bawah)) * (H - m.b - m.t);
+    const svg = svgBaru(document.getElementById("c-tepat"), W, H, "Grafik garis persentase pengaduan selesai tepat waktu per bulan");
+    const { band, xs } = kerangkaBulan(svg, W, H, m, bulan);
+    const step = (100 - bawah) > 30 ? 10 : 5;
+    for (let v = bawah; v <= 100; v += step) {
+      el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      teks(svg, m.l - 8, y(v) + 4, v + "%", { "text-anchor": "end", style: "font-variant-numeric:tabular-nums" });
+    }
+    el("line", { x1: m.l, x2: W - m.r, y1: y(D.target_persen), y2: y(D.target_persen), stroke: "var(--ref)", "stroke-width": 1 }, svg);
+    teks(svg, W - m.r, y(D.target_persen) - 5, `Target ${D.target_persen}%`, { "text-anchor": "end", fill: "var(--ink-2)" });
+    const d = bulan.map((b, i) => isFinite(nilai[i]) ? `${i === 0 ? "M" : "L"}${xs(i)},${y(nilai[i])}` : "").join("");
+    el("path", { d, fill: "none", stroke: "var(--s1)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    const iMin = nilai.indexOf(Math.min(...ada)), iAkhir = nilai.length - 1;
+    const labelMin = Math.abs(xs(iMin) - xs(iAkhir)) > 56;
+    for (const i of new Set([iMin, iAkhir])) {
+      if (!isFinite(nilai[i])) continue;
+      if (i === iMin && i !== iAkhir && !labelMin) continue;
+      el("circle", { cx: xs(i), cy: y(nilai[i]), r: 4, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
+      // label di bawah titik terendah; titik akhir diberi label di sisi yang tidak tertabrak garis
+      const sebelum = i > 0 ? nilai[i - 1] : nilai[i];
+      const diAtas = i === iAkhir && i !== iMin && sebelum <= nilai[i];
+      teks(svg, xs(i), y(nilai[i]) + (diAtas ? -10 : 17), persen(nilai[i]),
+           { "text-anchor": i === iAkhir ? "end" : "middle", fill: "var(--ink)", "font-weight": 600 });
+    }
+    // crosshair
+    const garis = el("line", { y1: m.t - 14, y2: H - m.b, stroke: "var(--axis)", "stroke-width": 1, opacity: 0 }, svg);
+    const titik = el("circle", { r: 4, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2, opacity: 0 }, svg);
+    bulan.forEach((b, i) => {
+      const hit = el("rect", { x: m.l + band * i, y: m.t - 14, width: band, height: H - m.b - m.t + 14, class: "hit",
+                               "aria-label": `${namaBulan(b)}: ${persen(nilai[i])} tepat waktu` }, svg);
+      pasangHover(hit, () => [`${persen(nilai[i])} tepat waktu`, namaBulan(b)],
+        () => { garis.setAttribute("x1", xs(i)); garis.setAttribute("x2", xs(i)); garis.setAttribute("opacity", 1);
+                if (isFinite(nilai[i])) { titik.setAttribute("cx", xs(i)); titik.setAttribute("cy", y(nilai[i])); titik.setAttribute("opacity", 1); } },
+        () => { garis.setAttribute("opacity", 0); titik.setAttribute("opacity", 0); });
+    });
+    tabel("t-tepat", ["Bulan", "% tepat waktu"], bulan.map((b, i) => [namaBulan(b), persen(nilai[i])]));
+  }
+
+  // ----------------------------------------- grafik 3: per unit layanan --
+  function grafikUnit() {
+    const per = kelompok(saring({ semuaUnit: true }), 1);
+    const urut = [...per].sort((a, b) => a[1].tepat - b[1].tepat);
+    const W = lebar("c-unit"), lab = 92, kanan = 52, baris = 34, h = 18, atas = 22;
+    const H = atas + urut.length * baris + 4;
+    const svg = svgBaru(document.getElementById("c-unit"), W, H, "Grafik batang persentase tepat waktu per unit layanan");
+    const x = v => lab + (v / 100) * (W - lab - kanan);
+    for (const v of [0, 25, 50, 75, 100]) {
+      el("line", { x1: x(v), x2: x(v), y1: atas - 4, y2: H, stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
+    }
+    el("line", { x1: x(D.target_persen), x2: x(D.target_persen), y1: atas - 8, y2: H, stroke: "var(--ref)", "stroke-width": 1 }, svg);
+    teks(svg, x(D.target_persen), atas - 12, `Target ${D.target_persen}%`, { "text-anchor": "middle", fill: "var(--ink-2)" });
+    urut.forEach(([u, s], i) => {
+      const yy = atas + i * baris + (baris - h) / 2;
+      const sorot = state.unit < 0 || state.unit === u;
+      teks(svg, lab - 10, yy + h / 2 + 4, D.unit[u], { "text-anchor": "end", fill: sorot ? "var(--ink)" : "var(--muted)", "font-size": 12 });
+      el("path", { d: batang(x(0), x(s.tepat), yy, h), fill: sorot ? "var(--s1)" : "var(--dim)" }, svg);
+      teks(svg, x(s.tepat) + 6, yy + h / 2 + 4, persen(s.tepat), { ...HALO, fill: sorot ? "var(--ink)" : "var(--muted)", "font-size": 12, "font-weight": sorot ? 600 : 400 });
+      const hit = el("rect", { x: 0, y: atas + i * baris, width: W, height: baris, class: "hit",
+                               "aria-label": `${D.unit[u]}: ${persen(s.tepat)} tepat waktu` }, svg);
+      pasangHover(hit, () => [`${persen(s.tepat)} tepat waktu`,
+        `${D.unit[u]} · ${nf0.format(s.n)} tiket · rata-rata ${angka1(s.durasi)} jam`]);
+    });
+    tabel("t-unit", ["Unit", "Tiket", "% tepat waktu", "Rata-rata durasi (jam)", "Kepuasan (1–5)"],
+      urut.map(([u, s]) => [D.unit[u], nf0.format(s.n), persen(s.tepat), angka1(s.durasi), angka2(s.kepuasan)]));
+  }
+
+  // ------------------------------------------- grafik 4: dampak keterlambatan --
+  function grafikDampak(s) {
+    const rasio = s.diikutiTelat / s.diikutiTepat;
+    document.getElementById("d-dampak").textContent = isFinite(rasio)
+      ? `Tiket yang melewati SLA ${angka1(rasio)}× lebih sering diikuti pengaduan ulang dalam 30 hari, dan rating kepuasannya lebih rendah.`
+      : "Data tidak cukup untuk perbandingan.";
+    const W = lebar("c-dampak"), lab = 104, kanan = 48, h = 18, baris = 30;
+    const panel = [
+      { judul: "Diikuti pengaduan ulang ≤30 hari", nilai: [s.diikutiTepat, s.diikutiTelat], fmt: persen,
+        maks: langkahRapi(Math.max(1, s.diikutiTepat || 0, s.diikutiTelat || 0), 4).maks },
+      { judul: "Rata-rata kepuasan (skala 1–5)", nilai: [s.puasTepat, s.puasTelat], fmt: angka2, maks: 5 },
+    ];
+    const H = panel.length * (22 + 2 * baris + 14);
+    const svg = svgBaru(document.getElementById("c-dampak"), W, H, "Perbandingan tiket tepat waktu dan melewati SLA");
+    const labelBaris = ["Tepat waktu", "Melewati SLA"];
+    panel.forEach((p, k) => {
+      const y0 = k * (22 + 2 * baris + 14);
+      teks(svg, 0, y0 + 14, p.judul, { fill: "var(--ink-2)", "font-size": 12, "font-weight": 600 });
+      const x = v => lab + (v / p.maks) * (W - lab - kanan);
+      el("line", { x1: x(0), x2: x(0), y1: y0 + 22, y2: y0 + 22 + 2 * baris, stroke: "var(--axis)", "stroke-width": 1 }, svg);
+      p.nilai.forEach((v, i) => {
+        const yy = y0 + 22 + i * baris + (baris - h) / 2;
+        teks(svg, lab - 10, yy + h / 2 + 4, labelBaris[i], { "text-anchor": "end", fill: "var(--ink)", "font-size": 12 });
+        if (isFinite(v)) el("path", { d: batang(x(0), x(v), yy, h), fill: "var(--s1)" }, svg);
+        teks(svg, (isFinite(v) ? x(v) : x(0)) + 6, yy + h / 2 + 4, p.fmt(v), { fill: "var(--ink)", "font-size": 12, "font-weight": 600 });
+        const hit = el("rect", { x: 0, y: y0 + 22 + i * baris, width: W, height: baris, class: "hit", "aria-label": `${labelBaris[i]}: ${p.fmt(v)}` }, svg);
+        pasangHover(hit, () => [p.fmt(v), `${labelBaris[i]} · ${p.judul.toLowerCase()}`]);
+      });
+    });
+    tabel("t-dampak", ["Kelompok", "Jumlah tiket", "% diikuti pengaduan ulang", "Kepuasan (1–5)"], [
+      ["Tepat waktu", nf0.format(s.n_tepat), persen(s.diikutiTepat), angka2(s.puasTepat)],
+      ["Melewati SLA", nf0.format(s.n_telat), persen(s.diikutiTelat), angka2(s.puasTelat)]]);
+  }
+
+  // --------------------------------------------- grafik 5: per kategori --
+  function grafikKategori() {
+    const per = kelompok(saring({ semuaKategori: true }), 2);
+    const urut = [...per].sort((a, b) => b[1].n - a[1].n);
+    const W = lebar("c-kategori"), sempit = W < 620;
+    const lab = sempit ? 0 : 178, sela = 28, kanan = 52, baris = sempit ? 44 : 38, h = sempit ? 16 : 18, judul = 26;
+    const tinggiPanel = judul + urut.length * baris + 4;
+    const lebarPanel = sempit ? W - lab - kanan : (W - lab - sela - 2 * kanan) / 2;
+    const H = sempit ? 2 * tinggiPanel + 18 : tinggiPanel;
+    const svg = svgBaru(document.getElementById("c-kategori"), W, H, "Grafik batang jumlah tiket dan persentase tepat waktu per kategori");
+    const maksN = langkahRapi(Math.max(1, ...urut.map(([, s]) => s.n)), 4).maks;
+    // Dua panel: kiri/atas = jumlah tiket, kanan/bawah = % tepat waktu
+    const panel = [
+      { judul: "Jumlah tiket", x0: lab, y0: 0, skala: maksN, nilai: s => s.n, fmt: v => nf0.format(v), target: null },
+      { judul: "% selesai tepat waktu", x0: sempit ? lab : lab + lebarPanel + kanan + sela,
+        y0: sempit ? tinggiPanel + 18 : 0, skala: 100, nilai: s => s.tepat, fmt: persen, target: D.target_persen },
+    ];
+    panel.forEach((p, k) => {
+      const x = v => p.x0 + (v / p.skala) * lebarPanel;
+      const atas = p.y0 + judul;
+      teks(svg, sempit ? 0 : p.x0, p.y0 + 12, p.judul, { fill: "var(--ink-2)", "font-size": 12, "font-weight": 600 });
+      el("line", { x1: x(0), x2: x(0), y1: atas, y2: atas + urut.length * baris, stroke: "var(--axis)", "stroke-width": 1 }, svg);
+      if (p.target != null) {
+        el("line", { x1: x(p.target), x2: x(p.target), y1: atas - 4, y2: atas + urut.length * baris, stroke: "var(--ref)", "stroke-width": 1 }, svg);
+        teks(svg, x(p.target), atas - 8, `${p.target}%`, { "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 10.5 });
+      }
+      urut.forEach(([kat, s], i) => {
+        const yy = sempit ? atas + i * baris + 20 : atas + i * baris + (baris - h) / 2;
+        const sorot = state.kategori < 0 || state.kategori === kat;
+        const warna = sorot ? "var(--s1)" : "var(--dim)", tinta = sorot ? "var(--ink)" : "var(--muted)";
+        if (sempit) {
+          const t = teks(svg, 0, yy - 5, D.kategori[kat], { fill: tinta, "font-size": 12 });
+          const sla = el("tspan", { fill: "var(--muted)", "font-size": 10.5 }, t);
+          sla.textContent = `  ·  SLA ${D.sla[D.kategori[kat]]} jam`;
+        } else if (k === 0) {
+          teks(svg, lab - 10, yy + 7, D.kategori[kat], { "text-anchor": "end", fill: tinta, "font-size": 12 });
+          teks(svg, lab - 10, yy + 20, `SLA ${D.sla[D.kategori[kat]]} jam`, { "text-anchor": "end", "font-size": 10.5 });
+        }
+        el("path", { d: batang(x(0), x(p.nilai(s)), yy, h), fill: warna }, svg);
+        teks(svg, x(p.nilai(s)) + 6, yy + h / 2 + 4, p.fmt(p.nilai(s)),
+             { ...HALO, fill: tinta, "font-size": 12, "font-weight": sorot && k === 1 ? 600 : 400 });
+        const hit = el("rect", { x: 0, y: atas + i * baris, width: W, height: baris, class: "hit",
+                                 "aria-label": `${D.kategori[kat]}: ${nf0.format(s.n)} tiket, ${persen(s.tepat)} tepat waktu` }, svg);
+        pasangHover(hit, () => [`${nf0.format(s.n)} tiket · ${persen(s.tepat)} tepat waktu`,
+          `${D.kategori[kat]} · target ${D.sla[D.kategori[kat]]} jam · rata-rata ${angka1(s.durasi)} jam`]);
+      });
+    });
+    tabel("t-kategori", ["Kategori", "Target SLA (jam)", "Tiket", "% tepat waktu", "Rata-rata durasi (jam)", "Kepuasan (1–5)"],
+      urut.map(([k, s]) => [D.kategori[k], D.sla[D.kategori[k]], nf0.format(s.n), persen(s.tepat), angka1(s.durasi), angka2(s.kepuasan)]));
+  }
+
+  // ------------------------------------------ grafik 6: peta panas jam --
+  function grafikJam() {
+    const sel = Array.from({ length: 7 }, () => new Array(24).fill(0));
+    for (const r of D.jam) {
+      const th = String(D.tahun[r[0]]);
+      if (state.periode !== "semua" && th !== state.periode) continue;
+      if (state.unit >= 0 && r[1] !== state.unit) continue;
+      if (state.kategori >= 0 && r[2] !== state.kategori) continue;
+      sel[r[3]][r[4]] += r[5];
+    }
+    const maks = Math.max(1, ...sel.flat());
+    const warna = css("--heat").split(",").map(s => s.trim());
+    const W = lebar("c-jam"), lab = 58, celW = (W - lab) / 24, celH = Math.max(16, Math.min(28, celW * 0.9));
+    const H = 7 * celH + 84;
+    const svg = svgBaru(document.getElementById("c-jam"), W, H, "Peta panas jumlah tiket menurut hari dan jam");
+    sel.forEach((barisJam, d) => {
+      teks(svg, lab - 8, d * celH + celH / 2 + 4, D.hari[d], { "text-anchor": "end", fill: "var(--ink-2)", "font-size": 11.5 });
+      barisJam.forEach((v, j) => {
+        const bin = Math.min(warna.length - 1, Math.floor((v / maks) * warna.length));
+        const c = el("rect", { x: lab + j * celW + 1, y: d * celH + 1, width: Math.max(1, celW - 2), height: celH - 2, rx: 2,
+                               fill: warna[bin], "aria-label": `${D.hari[d]} jam ${String(j).padStart(2, "0")}: ${nf0.format(v)} tiket` }, svg);
+        pasangHover(c, () => [`${nf0.format(v)} tiket`, `${D.hari[d]}, pukul ${String(j).padStart(2, "0")}.00–${String(j).padStart(2, "0")}.59`],
+          () => c.setAttribute("stroke", "var(--ink)"), () => c.removeAttribute("stroke"));
+        c.removeAttribute("tabindex");
+      });
+    });
+    const ringkas = celW * 3 < 40;
+    for (let j = 0; j < 24; j += 3) teks(svg, lab + j * celW + celW / 2, 7 * celH + 16,
+      String(j).padStart(2, "0") + (ringkas ? "" : ".00"), { "text-anchor": "middle" });
+    // legenda skala: kotak warna, lalu keterangan di bawahnya
+    const ly = 7 * celH + 32, lw = Math.min(28, (W - lab) / 9);
+    warna.forEach((c, i) => el("rect", { x: lab + i * (lw + 2), y: ly, width: lw, height: 14, rx: 2, fill: c }, svg));
+    teks(svg, lab, ly + 30, `Lebih sedikit → lebih banyak (maks. ${nf0.format(maks)} tiket per sel)`, { "font-size": 10.5 });
+    tabel("t-jam", ["Hari", ...Array.from({ length: 24 }, (_, j) => String(j).padStart(2, "0"))],
+      sel.map((b, d) => [D.hari[d], ...b.map(v => nf0.format(v))]));
+  }
+
+  // ------------------------------------------------- KPI & ringkasan --
+  function kpi(s) {
+    const host = document.getElementById("kpis");
+    const kartu = [
+      { label: "Selesai tepat waktu", nilai: persen(s.tepat), sub: `Target ${D.target_persen}% · selisih ${s.tepat >= D.target_persen ? "+" : "−"}${angka1(Math.abs(s.tepat - D.target_persen))} poin`, hero: true },
+      { label: "Total pengaduan", nilai: nf0.format(s.n), sub: `${nf0.format(s.n_telat)} tiket melewati SLA` },
+      { label: "Rata-rata durasi penyelesaian", nilai: `${angka1(s.durasi)} jam`, sub: "Semua kategori" },
+      { label: "Kepuasan pelanggan", nilai: angka2(s.kepuasan), sub: `Skala 1–5 · ${nf0.format(s.n_rating)} responden` },
+      { label: "Pengaduan ulang ≤30 hari", nilai: persen(s.ulang), sub: "Pelanggan & kategori yang sama" },
+    ];
+    host.replaceChildren(...kartu.map(k => {
+      const d = document.createElement("div"); d.className = "card tile" + (k.hero ? " hero" : "");
+      for (const [cls, t] of [["label", k.label], ["value", k.nilai], ["sub", k.sub]]) {
+        const e = document.createElement("div"); e.className = cls; e.textContent = t; d.appendChild(e);
+      }
+      return d;
+    }));
+  }
+  function ringkasan(s) {
+    const host = document.getElementById("headline");
+    const unit = [...kelompok(saring({ semuaUnit: true }), 1)].sort((a, b) => a[1].tepat - b[1].tepat)[0];
+    const kat = [...kelompok(saring({ semuaKategori: true }), 2)].sort((a, b) => a[1].tepat - b[1].tepat)[0];
+    host.replaceChildren();
+    const b = document.createElement("strong"); b.textContent = persen(s.tepat);
+    host.append(b, ` pengaduan selesai tepat waktu (${s.tepat >= D.target_persen ? "memenuhi" : "di bawah"} target ${D.target_persen}%). `);
+    const bagian = [];
+    if (state.unit < 0 && unit) bagian.push(`${D.unit[unit[0]]} (${persen(unit[1].tepat)})`);
+    if (state.kategori < 0 && kat) bagian.push(`kategori ${D.kategori[kat[0]]} (${persen(kat[1].tepat)})`);
+    if (bagian.length) host.append(`Terendah: ${bagian.join(" dan ")}.`);
+  }
+
+  // ------------------------------------------------------------ render --
+  function render() {
+    const rows = saring();
+    const s = jumlah(rows);
+    ringkasan(s); kpi(s);
+    grafikBulan(rows); grafikTepat(rows); grafikUnit(); grafikDampak(s); grafikKategori(); grafikJam();
+  }
+  function isiPilihan(id, label, daftar) {
+    const sel = document.getElementById(id);
+    sel.replaceChildren(new Option(label, -1), ...daftar.map((n, i) => new Option(n, i)));
+  }
+  isiPilihan("f-unit", "Semua unit", D.unit);
+  isiPilihan("f-kategori", "Semua kategori", D.kategori);
+  document.getElementById("f-periode").addEventListener("change", e => { state.periode = e.target.value; render(); });
+  document.getElementById("f-unit").addEventListener("change", e => { state.unit = +e.target.value; render(); });
+  document.getElementById("f-kategori").addEventListener("change", e => { state.kategori = +e.target.value; render(); });
+  let t; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(render, 120); });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  render();
+})();
+</script>
+</body>
+</html>
